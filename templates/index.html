@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Prediction Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-box" id="chat-box">
+        <div class="bot-message">👋 Hi there! I’m your Placement Predictor Bot. Ready to check your placement chances?</div>
+        <div class="bot-message">Let’s begin! Please enter your <strong>IQ</strong>.</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type your answer..." autofocus>
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    const questions = [
+        "IQ",
+        "Previous Semester Result",
+        "CGPA",
+        "Academic Performance",
+        "Internship Experience (0 or 1)",
+        "Extra Curricular Score",
+        "Communication Skills",
+        "Projects Completed",
+        "College ID"
+    ];
+
+    let answers = [];
+    let currentQuestion = 0;
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    function sendMessage() {
+        const userText = userInput.value.trim();
+        if (userText === "") return;
+
+        // Add user message
+        chatBox.innerHTML += `<div class="user-message">${userText}</div>`;
+        userInput.value = "";
+
+        // Save answer
+        answers.push(userText);
+
+        // Move to next question
+        currentQuestion++;
+
+        if (currentQuestion < questions.length) {
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="bot-message">Enter your <strong>${questions[currentQuestion]}</strong>.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 600);
+        } else {
+            // Send all answers to Flask backend
+            sendToBackend();
+        }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendToBackend() {
+        fetch('/chat_predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers })
+        })
+        .then(response => response.json())
+        .then(data => {
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="bot-message result">${data.prediction}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
+        });
+    }
+</script>
+</body>
+</html>
